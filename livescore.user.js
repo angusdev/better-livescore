@@ -2,17 +2,12 @@
 // @name        Livescore
 // @namespace   http://ellab.org/
 // @description Make livescore.com better. Show the match details in the same page instead of pop-up and show the match time in your local time
-// @version     1
+// @version     2
 // @icon        http://ellab-gm.googlecode.com/svn/tags/livsecore-1/icon-128.png
 // @include     http://www.livescore.com/
-// @include     http://www.livescores.com/
-// @include     http://www.livescore.co.uk/
-// @include     http://www.livescore.com/default.dll*
-// @include     http://www.livescores.com/default.dll*
-// @include     http://www.livescore.co.uk/default.dll*
+// @include     http://www.livescores.com/*
+// @include     http://www.livescore.co.uk/*
 // @include     http://www.livescore.com/soccer/*
-// @include     http://www.livescores.com/soccer/*
-// @include     http://www.livescore.co.uk/soccer/*
 // @require     http://ellab-gm.googlecode.com/svn/tags/livsecore-1/jquery-1.8.2.min.js
 // @require     http://ellab-gm.googlecode.com/svn/tags/livsecore-1/jquery.color-2.1.0.min.js
 // @resource    loading http://ellab-gm.googlecode.com/svn/tags/livsecore-1/loading.gif
@@ -47,7 +42,10 @@ function padTime(s) {
 
 function onClickRow(e) {
   var $trMatch = $(e.target).closest('tr');
-  var $sibling = $trMatch.next('tr');
+  var $sibling = $trMatch.next();
+  if (!$sibling.hasClass('ellab-match-details')) {
+    $sibling = $('<tr class="ellab-match-details"><td colspan="99"></td></tr>').insertAfter($trMatch);
+  }
   var $td = $sibling.children('td:first');
 
   $trMatch.find('a').each(function() {
@@ -64,30 +62,15 @@ function onClickRow(e) {
         });
 
     $.ajax(this.href).done(function(html) {
-      html = html.match(/<table bgcolor(.|\r\n)*<\/table>/m);
+      html = html.match(/<table(.|\r\n)*<\/table>/m);
       if (html) {
         html = html[0];
         $td.html(html);
 
-        // remove the nested table
-        $td.find('table table').remove();
-        // remove the title tr
-        $td.find('.title').remove();
-        // use inline style to replace class
-        $td.find('.dark').removeClass('dark').css({ 'background-color': '#CCC', 'height': '16px', 'text-align': 'right' });
-        $td.find('.light').removeClass('light').css({ 'background-color': '#DDD', 'height': '16px', 'text-align': 'right' });
+        // remove the match result title
+        $td.find('table:first-child tr:first-child').remove();
 
-        $td.find('table:first').attr('width', '100%');
-
-        // use animate instead of slideDown so can start with the original height instead of collapse first
-        var height = $td.height();
-        $td.wrapInner('<div style="d1isplay: none; height:' + imgHeight + 'px;" />')
-           .parent()
-           .find('td > div')
-           .animate({ 'height': height + 'px' }, { duration: 'slow' }, function() {
-                       var $set = $(this);
-                       $set.replaceWith($set.contents());
-                     });
+        $td.find('th.footer').closest('table').remove();
 
         // change the match row color to clearly show as separator
         $trMatch.find('td').animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
@@ -100,45 +83,36 @@ function onClickRow(e) {
 
   e.stopPropagation();
   e.preventDefault();
+  return false;
 }
 
-$('table[width="468"] tr[bgcolor="#cfcfcf"] a, table[width="468"] tr[bgcolor="#dfdfdf"] a').removeAttr('onclick').click(onClickRow);
+// redirect to livescore.com
+if (document.location.hostname.indexOf('livescores.com') >= 0) {
+  document.location.assign(document.location.href.replace('livescores.com', 'livescore.com'));
+}
+if (document.location.hostname.indexOf('livescore.co.uk') >= 0) {
+  document.location.assign(document.location.href.replace('livescore.co.uk', 'livescore.com'));
+}
 
-// show local time
-var hour = new Date().getHours();
-var minute = new Date().getMinutes();
-var minutes = hour * 60 + minute;
+// attach click event of score
+$('table.league-table a.scorelink').each(function() {
+  this.parentNode.innerHTML = '<a data-type="ellab-match" href="' + this.href + '">' + this.innerHTML + '</a>';
+});
 
-$('tr[bgcolor="#333333"] > td.match-light').filter(function() {
-  return this.innerHTML.match(/\d\d?\:\d\d/);
-}).each(function() {
-  var $next = $(this).parents('tr').next('tr');
+$(document).on('click', 'a[data-type="ellab-match"]', onClickRow);
 
-  var leagueTimeRes = this.innerHTML.match(/(\d\d?)\:(\d\d)/);
-  var leagueMinutes = parseInt(leagueTimeRes[1], 10) * 60 + parseInt(leagueTimeRes[2], 10);
-  var leagueOffset = Math.round((leagueMinutes - minutes) / 30) * 30;
-
-  function replaceMatchTime(match, p1, p2) {
-    var pminutes = parseInt(p1, 10) * 60 + parseInt(p2, 10) - leagueOffset;
-    pminutes = pminutes % (24 * 60);
-    return match + '&nbsp;(' + padTime(parseInt(pminutes / 60, 10)) + ':' + padTime(pminutes % 60) + ')';
-  }
-
-  while ($next.length > 0) {
-    if ($next.attr('bgcolor') === '#cfcfcf' || $next.attr('bgcolor') === '#dfdfdf') {
-      // match
-      $next[0].cells[0].innerHTML = $next[0].cells[0].innerHTML.replace(/(\d\d?)\:(\d\d)/, replaceMatchTime);
-    }
-    else if ($next.attr('bgcolor') === '#333333') {
-      // either date separator or league``   separator
-      if ($next[0].cells[0].innerHTML !== '&nbsp;') {
-        // === &nbsp; is date separator, !== is league separator
-        break;
-      }
-    }
-
-    $next = $next.next('tr');
-  }
+// attach click events of match detail menu
+$(document).on('click', 'a[data-type="substitutions_button"]', function() {
+  // show the substitutions table
+  $(this).closest('table').siblings('table').show();
+});
+$(document).on('click', 'a[data-type="close_button"]', function() {
+  // show the substitutions table
+  $(this).closest('table').siblings('table').hide();
+});
+$(document).on('click', 'a[data-type="details_button"]', function() {
+  // show the substitutions table
+  $(this).closest('table').find('div[data-type="details"]').removeClass('hidden');
 });
 
 })();
