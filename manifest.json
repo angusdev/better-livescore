@@ -1,0 +1,21 @@
+{
+  "name": "Better Livescore",
+  "version": "1",
+  "manifest_version": 2,
+  "description": "Make livescore.com better. Show the match details in the same page instead of pop-up and show the match time in your local time",
+  "icons": {
+    "16": "icon-16.png",
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://www.livescore.com/", "http://www.livescores.com/", "http://www.livescore.co.uk/",
+                  "http://www.livescore.com/default.dll*", "http://www.livescores.com/default.dll*", "http://www.livescore.co.uk/default.dll*",
+                  "http://www.livescore.com/soccer/*", "http://www.livescores.com/soccer/*", "http://www.livescore.co.uk/soccer/*"],
+      "run_at": "document_end",
+      "js": ["jquery-1.8.2.min.js", "jquery.color-2.1.0.min.js", "livescore.user.js"]
+    }
+  ],
+  "web_accessible_resources": ["loading.gif"]
+}
