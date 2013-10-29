@@ -2,7 +2,7 @@
   "name": "Better Livescore",
   "version": "2",
   "manifest_version": 2,
-  "description": "Make livescore.com better. Show the match details in the same page instead of pop-up and show the match time in your local time",
+  "description": "Make livescore.com better. Show the match details in the same page instead of pop-up.",
   "icons": {
     "16": "icon-16.png",
     "48": "icon-48.png",
