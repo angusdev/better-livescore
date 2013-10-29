@@ -44,7 +44,7 @@ function onClickRow(e) {
   var $trMatch = $(e.target).closest('tr');
   var $sibling = $trMatch.next();
   if (!$sibling.hasClass('ellab-match-details')) {
-    $sibling = $('<tr class="ellab-match-details"><td colspan="99"></td></tr>').insertAfter($trMatch);
+    $sibling = $('<tr class="ellab-match-details"><td colspan="99" style="padding: 0;"></td></tr>').insertAfter($trMatch);
   }
   var $td = $sibling.children('td:first');
 
