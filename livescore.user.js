@@ -3,16 +3,20 @@
 // @namespace   http://ellab.org/
 // @description Make livescore.com better. Show the match details in the same page instead of pop-up and show the match time in your local time
 // @version     3
-// @icon        https://raw.github.com/angusdev/better-livescore/1/icon-128.png
+// @icon        https://raw.github.com/angusdev/better-livescore/3/icon-128.png
 // @include     http://www.livescore.com/
 // @include     http://www.livescores.com/*
 // @include     http://www.livescore.co.uk/*
 // @include     http://www.livescore.com/soccer/*
-// @require     https://raw.github.com/angusdev/better-livescore/1/jquery-1.8.2.min.js
-// @require     https://raw.github.com/angusdev/better-livescore/1/jquery.color-2.1.0.min.js
-// @resource    loading https://raw.github.com/angusdev/better-livescore/1/loading.gif
-// @resource    flags https://raw.github.com/angusdev/better-livescore/3/flags.png
+// @require     https://raw.github.com/angusdev/better-livescore/3/jquery-1.8.2.min.js
+// @require     https://raw.github.com/angusdev/better-livescore/3/jquery.color-2.1.0.min.js
+// @require     https://raw.github.com/angusdev/better-livescore/3/countrycode.js
+// @resource    loading https://raw.github.com/angusdev/better-livescore/3/loading.gif
+// @resource    flags.png https://raw.github.com/angusdev/better-livescore/3/flags.png
+// @resource    flags.css https://raw.github.com/angusdev/better-livescore/3/flags.css
 // @grant       GM_getResourceURL
+// @grant       GM_getResourceText
+// @grant       GM_addStyle
 // ==/UserScript==
 
 /*jshint white: false, browser: true, onevar:false, devel:true */
@@ -21,9 +25,9 @@
 'use strict';
 
 /*jshint newcap: false */
-function getResourceURL(name, file) {
+function getResourceURL(file, resourceName) {
   if (typeof GM_getResourceURL !== 'undefined') {
-    return GM_getResourceURL(name);
+    return GM_getResourceURL(resourceName || file);
   }
   else if (typeof chrome !== 'undefined' && typeof chrome.extension !== 'undefined' && typeof chrome.extension.getURL !== 'undefined') {
     return chrome.extension.getURL(file);
@@ -95,6 +99,12 @@ if (document.location.hostname.indexOf('livescore.co.uk') >= 0) {
   document.location.assign(document.location.href.replace('livescore.co.uk', 'livescore.com'));
 }
 
+// add CSS for Greasemonkey
+if (typeof GM_addStyle !== 'undefined' && typeof GM_getResourceText !== 'undefined') {
+  var css = GM_getResourceText('flags.css');
+  GM_addStyle(css);
+}
+
 // attach click event of score
 $('table.league-table a.scorelink').each(function() {
   this.parentNode.innerHTML = '<a data-type="ellab-match" href="' + this.href + '">' + this.innerHTML + '</a>';
@@ -119,7 +129,6 @@ $(document).on('click', 'a[data-type="details_button"]', function() {
 // add flag to league
 $('.league').each(function() {
   var $this = $(this);
-
   if ($this.text()) {
     // trim any leading spaces
     var league = $this.text().replace(/^\s+/, '');
@@ -127,7 +136,7 @@ $('.league').each(function() {
     var countrycode = org.ellab.livescore.getCountryCodeStartsWith(league);
     if (countrycode) {
       $this.prepend('<div class="flag flag-' + countrycode +
-                    '" style="background-image:url(' + getResourceURL('flags.png', 'flags.png') + ');" />');
+                    '" style="background-image:url(' + getResourceURL('flags.png') + ');" />');
     }
   }
 });
