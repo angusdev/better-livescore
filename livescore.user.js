@@ -49,41 +49,41 @@ function onClickRow(e) {
   }
   var $td = $sibling.children('td:first');
 
-  $trMatch.find('a').each(function() {
-    $td.css('background-color', '#333').html('<div style="text-align:center; padding: 5px;"><img src="' + LOADING_IMG + '" border="0"/></div>');
-    // keep the height for later animation
-    var imgHeight = $td.height();
+  $td.css('background-color', '#333').html('<div style="text-align:center; padding: 5px;"><img data-role="loading" src="' + LOADING_IMG + '" border="0"/></div>');
+  // keep the height for later animation
+  var imgHeight = $td.height();
 
-    $td.wrapInner('<div style="display: none;" />')
-       .parent()
-       .find('td > div')
-       .slideDown(500, function() {
-         var $set = $(this);
-         $set.replaceWith($set.contents());
+  $td.wrapInner('<div style="display: none;" />')
+     .find('> div:first-child')
+     .slideDown(200);
+
+  $.ajax(e.target.href).done(function(html) {
+    html = html.match(/<table(.|\r\n)*<\/table>/m);
+    if (html) {
+      $td.html(html[0]);
+
+      // remove the match result title
+      $td.find('table:first-child tr:first-child').remove();
+      $td.find('th.footer').closest('table').remove();
+
+      // use animate instead of slideDown so can start with the original height instead of collapse first
+      var height = $td.height();
+      $td.wrapInner('<div style="overflow:hidden; height:' + imgHeight + 'px;" />')
+        .find('> div:first-child')
+        .animate({ 'height': height + 'px' }, 500, null, function() {
+          var $set = $(this);
+          $set.replaceWith($set.contents());
+
+          // change the match row color to clearly show as separator
+          $trMatch.find('td').animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
+          $trMatch.find('a').animate({ 'color':'#fff' }, { duration: 'slow' });
         });
-
-    $.ajax(this.href).done(function(html) {
-      html = html.match(/<table(.|\r\n)*<\/table>/m);
-      if (html) {
-        html = html[0];
-        $td.html(html);
-
-        // remove the match result title
-        $td.find('table:first-child tr:first-child').remove();
-
-        $td.find('th.footer').closest('table').remove();
-
-        // change the match row color to clearly show as separator
-        $trMatch.find('td').animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
-        $trMatch.find('a').animate({ 'color':'#fff' }, { duration: 'slow' });
-      }
-    });
-
-    return false;
+    }
   });
 
   e.stopPropagation();
   e.preventDefault();
+
   return false;
 }
 
