@@ -11,7 +11,7 @@
 // @require     https://raw.github.com/angusdev/better-livescore/3/jquery-1.8.2.min.js
 // @require     https://raw.github.com/angusdev/better-livescore/3/jquery.color-2.1.0.min.js
 // @require     https://raw.github.com/angusdev/better-livescore/3/countrycode.js
-// @resource    loading https://raw.github.com/angusdev/better-livescore/3/loading.gif
+// @resource    loading.gif https://raw.github.com/angusdev/better-livescore/3/loading.gif
 // @resource    flags.png https://raw.github.com/angusdev/better-livescore/3/flags.png
 // @resource    flags.css https://raw.github.com/angusdev/better-livescore/3/flags.css
 // @grant       GM_getResourceURL
@@ -38,7 +38,7 @@ function getResourceURL(file, resourceName) {
 }
 /*jshint newcap: true */
 
-var LOADING_IMG = getResourceURL('loading', 'loading.gif');
+var LOADING_IMG = getResourceURL('loading.gif');
 
 function padTime(s) {
   s = '' + s;
