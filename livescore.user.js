@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name        Livescore
+// @name        Better Livescore
 // @namespace   http://ellab.org/
-// @description Make livescore.com better. Show the match details in the same page instead of pop-up and show the match time in your local time
+// @description Make livescore.com better. Show the match details in the same page instead of pop-up.
 // @version     3
 // @icon        https://raw.github.com/angusdev/better-livescore/3/icon-128.png
 // @include     http://www.livescore.com/
