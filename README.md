@@ -7,7 +7,7 @@ Watch in Youtube: http://youtu.be/YkDTY7P51DM
 
 Install
 -------
-Chrome: [Install from Chrome Webstore](https://chrome.google.com/webstore/detail/better-livescore/gnghdfalngmjadfbcfjiecdceppgephb)
+Chrome: [Install from Chrome Web Store](https://chrome.google.com/webstore/detail/better-livescore/gnghdfalngmjadfbcfjiecdceppgephb)
 
 Firefox: [Install from userscript.org](http://userscripts.org/scripts/show/181418)
 
