@@ -1,6 +1,6 @@
 {
   "name": "Better Livescore",
-  "version": "3",
+  "version": "4",
   "manifest_version": 2,
   "description": "Make livescore.com better. Show the match details in the same page instead of pop-up.",
   "icons": {
