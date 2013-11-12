@@ -269,7 +269,7 @@ var countryCode = [
   ['Zimbabwe', 'zw'],
 
   // special for livescore.com
-  ['England', 'gb'],
+  ['England', 'england'],
   ['Scotland', 'scotland'],
   ['Wales', 'wales'],
   ['Russia', 'ru'],
@@ -277,7 +277,10 @@ var countryCode = [
   ['South America', null],
   ['Venezuela', 've'],
   ['USA', 'us'],
-  ['Korea Republic', 'kr']
+  ['Korea Republic', 'kr'],
+  ['Vietnam', 'vn'],
+  ['Champions League', 'eu'],
+  ['Euro', 'eu']
 ];
 
 // return the country code match the input string
