@@ -45,6 +45,31 @@ function padTime(s) {
   return  (s.length === 1)?('0' + s):s;
 }
 
+function extract(s, prefix, suffix) {
+  var i;
+  if (prefix) {
+    i = s.indexOf(prefix);
+    if (i >= 0) {
+      s = s.substring(i + prefix.length);
+    }
+    else {
+      return '';
+    }
+  }
+
+  if (suffix) {
+    i = s.indexOf(suffix);
+    if (i >= 0) {
+      s = s.substring(0, i);
+    }
+    else {
+      return s;
+    }
+  }
+
+  return s;
+}
+
 function onClickRow(e) {
   var $trMatch = $(e.target).closest('tr');
   var $sibling = $trMatch.next();
@@ -62,14 +87,11 @@ function onClickRow(e) {
      .slideDown(200);
 
   $.ajax(e.target.href).done(function(html) {
-    html = html.match(/<table(.|\r\n)*<\/table>/m);
+    // <body xxx><div>needed_content></div><script xxx></script>
+    html = extract(extract(html, '<body', '<script'), '>');
     if (html) {
-      $td.html(html[0]);
-
-      // remove the match result title
-      $td.find('table:first-child tr:first-child').remove();
-      $td.find('th.footer').closest('table').remove();
-
+      $td.html(html);
+      $td.find('.row-tall').remove();
       // use animate instead of slideDown so can start with the original height instead of collapse first
       var height = $td.height();
       $td.wrapInner('<div style="overflow:hidden; height:' + imgHeight + 'px;" />')
@@ -115,15 +137,21 @@ $(document).on('click', 'a[data-type="ellab-match"]', onClickRow);
 // attach click events of match detail menu
 $(document).on('click', 'a[data-type="substitutions_button"]', function() {
   // show the substitutions table
-  $(this).closest('table').siblings('table').show();
+  $(this).closest('td').find('[data-type="substitutions"]').slideDown();
 });
-$(document).on('click', 'a[data-type="close_button"]', function() {
+$(document).on('click', 'a[data-type="stats_button"]', function() {
   // show the substitutions table
-  $(this).closest('table').siblings('table').hide();
+  $(this).closest('td').find('[data-type="stats"]').slideDown();
 });
 $(document).on('click', 'a[data-type="details_button"]', function() {
   // show the substitutions table
-  $(this).closest('table').find('div[data-type="details"]').removeClass('hidden');
+  $(this).closest('td').find('[data-type="details"]').slideDown();
+});
+$(document).on('click', 'a[data-type="close_button"]', function() {
+  // show the substitutions table
+  $(this).closest('td').find('[data-type="substitutions"]').slideUp();
+  $(this).closest('td').find('[data-type="stats"]').slideUp();
+  $(this).closest('td').find('div[data-type="details"]').slideUp();
 });
 
 // add flag to league
