@@ -13,7 +13,7 @@
       "matches": ["http://www.livescore.com/", "http://www.livescores.com/*", "http://www.livescore.co.uk/*",
                   "http://www.livescore.com/soccer/*"],
       "run_at": "document_end",
-      "css": ["flags.css"],
+      "css": ["livescore.css", "flags.css"],
       "js": ["jquery-1.8.2.min.js", "jquery.color-2.1.0.min.js", "countrycode.js", "livescore.user.js"]
     }
   ],

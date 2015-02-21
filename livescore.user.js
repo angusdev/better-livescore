@@ -71,18 +71,17 @@ function extract(s, prefix, suffix) {
 }
 
 function onClickRow(e) {
-  var $trMatch = $(e.target).closest('tr');
-  var $sibling = $trMatch.next();
+  var $matchRow = $(e.target).closest('.row-gray');
+  var $sibling = $matchRow.next();
   if (!$sibling.hasClass('ellab-match-details')) {
-    $sibling = $('<tr class="ellab-match-details"><td colspan="99" style="padding: 0;"></td></tr>').insertAfter($trMatch);
+    $sibling = $('<div class="ellab-match-details"></div>').insertAfter($matchRow);
   }
-  var $td = $sibling.children('td:first');
 
-  $td.css('background-color', '#333').html('<div style="text-align:center; padding: 5px;"><img data-role="loading" src="' + LOADING_IMG + '" border="0"/></div>');
+  $sibling.css('background-color', '#333').html('<div style="text-align:center; padding: 5px;"><img data-role="loading" src="' + LOADING_IMG + '" border="0"/></div>');
   // keep the height for later animation
-  var imgHeight = $td.height();
+  var imgHeight = $sibling.height();
 
-  $td.wrapInner('<div style="display: none;" />')
+  $sibling.wrapInner('<div style="display: none;" />')
      .find('> div:first-child')
      .slideDown(200);
 
@@ -90,19 +89,20 @@ function onClickRow(e) {
     // <body xxx><div>needed_content></div><script xxx></script>
     html = extract(extract(html, '<body', '<script'), '>');
     if (html) {
-      $td.html(html);
-      $td.find('.row-tall').remove();
+      $sibling.html(html);
+      $sibling.find('.row-tall').remove();
       // use animate instead of slideDown so can start with the original height instead of collapse first
-      var height = $td.height();
-      $td.wrapInner('<div style="overflow:hidden; height:' + imgHeight + 'px;" />')
+      var height = $sibling.height();
+      $sibling.wrapInner('<div style="overflow:hidden; height:' + imgHeight + 'px;" />')
         .find('> div:first-child')
         .animate({ 'height': height + 'px' }, 500, null, function() {
           var $set = $(this);
           $set.replaceWith($set.contents());
 
           // change the match row color to clearly show as separator
-          $trMatch.find('td').animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
-          $trMatch.find('a').animate({ 'color':'#fff' }, { duration: 'slow' });
+          $matchRow.animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
+          $matchRow.find('div').animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
+          $matchRow.find('a').animate({ 'color':'#fff' }, { duration: 'slow' });
         });
     }
   });
@@ -128,7 +128,7 @@ if (typeof GM_addStyle !== 'undefined' && typeof GM_getResourceText !== 'undefin
 }
 
 // attach click event of score
-$('table.league-table a.scorelink').each(function() {
+$('a.scorelink').each(function() {
   this.parentNode.innerHTML = '<a data-type="ellab-match" href="' + this.href + '">' + this.innerHTML + '</a>';
 });
 
@@ -137,25 +137,39 @@ $(document).on('click', 'a[data-type="ellab-match"]', onClickRow);
 // attach click events of match detail menu
 $(document).on('click', 'a[data-type="substitutions_button"]', function() {
   // show the substitutions table
-  $(this).closest('td').find('[data-type="substitutions"]').slideDown();
+  $(this).closest('.ellab-match-details').find('[data-type="substitutions"]').each(function() {
+    if ($(this).is(':visible')) {
+      $(this).slideUp();
+    }
+    else {
+      $(this).removeClass('hidden').hide().slideDown();
+    }
+  });
 });
 $(document).on('click', 'a[data-type="stats_button"]', function() {
   // show the substitutions table
-  $(this).closest('td').find('[data-type="stats"]').slideDown();
+  $(this).closest('.ellab-match-details').find('[data-type="stats"]').each(function() {
+    if ($(this).is(':visible')) {
+      $(this).slideUp();
+    }
+    else {
+      $(this).removeClass('hidden').hide().slideDown();
+    }
+  });
 });
 $(document).on('click', 'a[data-type="details_button"]', function() {
   // show the substitutions table
-  $(this).closest('td').find('[data-type="details"]').slideDown();
+  $(this).closest('.ellab-match-details').find('[data-type="details"]').toggleClass('hidden');
 });
 $(document).on('click', 'a[data-type="close_button"]', function() {
   // show the substitutions table
-  $(this).closest('td').find('[data-type="substitutions"]').slideUp();
-  $(this).closest('td').find('[data-type="stats"]').slideUp();
-  $(this).closest('td').find('div[data-type="details"]').slideUp();
+  $(this).closest('.ellab-match-details').find('[data-type="substitutions"]').slideUp();
+  $(this).closest('.ellab-match-details').find('[data-type="stats"]').slideUp();
+  $(this).closest('.ellab-match-details').find('div[data-type="details"]').addClass('hidden');
 });
 
 // add flag to league
-$('.league').each(function() {
+$('.row-tall a strong').each(function() {
   var $this = $(this);
   if ($this.text()) {
     // trim any leading spaces
