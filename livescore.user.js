@@ -70,6 +70,37 @@ function extract(s, prefix, suffix) {
   return s;
 }
 
+function framjax(url, checkCallback, doneCallback) {
+  function loopCheckCallBack(object, doc) {
+    if (checkCallback.call(iframe, doc)) {
+      doneCallback.call(iframe, doc);
+      iframe.parentNode.removeChild(iframe);
+      iframe = null;
+      return;
+    }
+
+    window.setTimeout(function() {
+      loopCheckCallBack(object, doc);
+    }, 500);
+  }
+
+  var iframe = document.createElement('iframe');
+  iframe.src = url;
+  iframe.style.width = '1px';
+  iframe.style.height = '1px';
+  iframe.onload = function() {
+    if (checkCallback) {
+      loopCheckCallBack(iframe, iframe.document || iframe.contentDocument || iframe.contentWindow.document);
+    }
+    else {
+      doneCallback.call((iframe.document || iframe.contentDocument || iframe.contentWindow.document));
+      iframe.parentNode.removeChild(iframe);
+      iframe = null;
+    }
+  };
+  document.body.append(iframe);
+}
+
 function onClickRow(e) {
   var $matchRow = $(e.target).closest('.row-gray');
   var $sibling = $matchRow.next();
@@ -85,27 +116,50 @@ function onClickRow(e) {
      .find('> div:first-child')
      .slideDown(200);
 
-  $.ajax(e.target.href).done(function(html) {
-    // <body xxx><div>needed_content></div><script xxx></script>
-    html = extract(extract(html, '<body', '<script'), '>');
-    if (html) {
-      $sibling.html(html);
-      $sibling.find('.row-tall').remove();
-      // use animate instead of slideDown so can start with the original height instead of collapse first
-      var height = $sibling.height();
-      $sibling.wrapInner('<div style="overflow:hidden; height:' + imgHeight + 'px;" />')
-        .find('> div:first-child')
-        .animate({ 'height': height + 'px' }, 500, null, function() {
-          var $set = $(this);
-          $set.replaceWith($set.contents());
+  var a = e.target;
+  while (a.tagName.toUpperCase() != 'A') {
+    a = a.parentNode;
+  }
 
-          // change the match row color to clearly show as separator
-          $matchRow.animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
-          $matchRow.find('div').animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
-          $matchRow.find('a').animate({ 'color':'#fff' }, { duration: 'slow' });
-        });
-    }
-  });
+  framjax(a.href, function(doc) {
+      return doc && doc.body && doc.body.innerHTML.indexOf('<div data-type="content"></div>') < 0;
+    },
+    function(doc) {
+      var html = '';
+      var tabhtml = doc.querySelector('[data-type="tab-bar"]').innerHTML;
+
+      var tabs = doc.querySelectorAll('[data-type="tab-bar"] [data-id]');
+      tabs.forEach(function(t, i) {
+        var tabid = t.getAttribute('data-id');
+        if (tabid) {
+          doc.querySelector('[data-type="tab-bar"] [data-id="' + tabid + '"]').click();
+        }
+        var res = doc.body.innerHTML;
+        res = doc.querySelector('[data-type=content]').innerHTML;
+        if (res) {
+          html += '<div content-id="' + (tabid || 'default') + '"' + (html?' style="display:none;"':'') + '>' + res + '</div>';
+        }
+      });
+
+      if (html) {
+        html = tabhtml + html;
+        $sibling.html(html);
+        $sibling.find('.row-tall').remove();
+        // use animate instead of slideDown so can start with the original height instead of collapse first
+        var height = $sibling.height();
+        $sibling.wrapInner('<div style="overflow:hidden; height:' + imgHeight + 'px;" />')
+          .find('> div:first-child')
+          .animate({ 'height': height + 'px' }, 500, null, function() {
+            var $set = $(this);
+            $set.replaceWith($set.contents());
+
+            // change the match row color to clearly show as separator
+            $matchRow.animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
+            $matchRow.find('div').animate({ 'backgroundColor':'#555', 'color':'#fff' }, { duration: 'slow' });
+            $matchRow.find('a').animate({ 'color':'#fff' }, { duration: 'slow' });
+          });
+      }
+    });
 
   e.stopPropagation();
   e.preventDefault();
@@ -127,60 +181,50 @@ if (typeof GM_addStyle !== 'undefined' && typeof GM_getResourceText !== 'undefin
   GM_addStyle(css);
 }
 
-// attach click event of score
-$('a.scorelink').each(function() {
-  this.parentNode.innerHTML = '<a data-type="ellab-match" href="' + this.href + '">' + this.innerHTML + '</a>';
-});
-
 $(document).on('click', 'a[data-type="ellab-match"]', onClickRow);
 
 // attach click events of match detail menu
-$(document).on('click', 'a[data-type="substitutions_button"]', function() {
-  // show the substitutions table
-  $(this).closest('.ellab-match-details').find('[data-type="substitutions"]').each(function() {
-    if ($(this).is(':visible')) {
-      $(this).slideUp();
-    }
-    else {
-      $(this).removeClass('hidden').hide().slideDown();
-    }
-  });
-});
-$(document).on('click', 'a[data-type="stats_button"]', function() {
-  // show the substitutions table
-  $(this).closest('.ellab-match-details').find('[data-type="stats"]').each(function() {
-    if ($(this).is(':visible')) {
-      $(this).slideUp();
-    }
-    else {
-      $(this).removeClass('hidden').hide().slideDown();
-    }
-  });
-});
-$(document).on('click', 'a[data-type="details_button"]', function() {
-  // show the substitutions table
-  $(this).closest('.ellab-match-details').find('[data-type="details"]').toggleClass('hidden');
-});
-$(document).on('click', 'a[data-type="close_button"]', function() {
-  // show the substitutions table
-  $(this).closest('.ellab-match-details').find('[data-type="substitutions"]').slideUp();
-  $(this).closest('.ellab-match-details').find('[data-type="stats"]').slideUp();
-  $(this).closest('.ellab-match-details').find('div[data-type="details"]').addClass('hidden');
+$(document).on('click', '.ellab-match-details a[data-type="tab"][data-id]', function(e) {
+  var $parent = $(this).parents('.ellab-match-details');
+  var tid = this.getAttribute('data-id') || 'default';
+  $parent.find('[data-type="tab"][data-id]').removeClass('selected');
+  $(e.target).closest('a').addClass('selected');
+  $parent.find('[content-id]').hide();
+  $parent.find('[content-id="' + tid + '"]').show();
+  e.preventDefault();
 });
 
-// add flag to league
-$('.row-tall a strong').each(function() {
-  var $this = $(this);
-  if ($this.text()) {
-    // trim any leading spaces
-    var league = $this.text().replace(/^\s+/, '');
-
-    var countrycode = org.ellab.livescore.getCountryCodeStartsWith(league);
-    if (countrycode) {
-      $this.prepend('<div class="flag flag-' + countrycode +
-                    '" style="background-image:url(' + getResourceURL('flags.png') + ');" />');
-    }
-  }
+$(document).on('click', '.ellab-match-details .assists-link', function(e) {
+  var $parent = $(this).parents('.ellab-match-details');
+  $parent.find('[data-type="sub-incident"].assist').removeClass('hidden');
+  e.preventDefault();
 });
+
+function main() {
+  window.setTimeout(main, 1000);
+
+  // attach click event of score
+  $('a.scorelink[data-type="link"]').each(function() {
+    this.parentNode.innerHTML = '<a data-type="ellab-match" href="' + this.href + '">' + this.innerHTML + '</a>';
+  });
+
+  // add flag to league
+  $('.row-tall a strong[data-flag!="true"]').each(function() {
+    var $this = $(this);
+    if ($this.text()) {
+      // trim any leading spaces
+      var league = $this.text().replace(/^\s+/, '');
+
+      var countrycode = org.ellab.livescore.getCountryCodeStartsWith(league);
+      if (countrycode) {
+        $this.attr('data-flag', 'true')
+            .prepend('<div class="flag flag-' + countrycode +
+                      '" style="background-image:url(' + getResourceURL('flags.png') + ');" />');
+      }
+    }
+  });
+}
+
+main();
 
 })();
